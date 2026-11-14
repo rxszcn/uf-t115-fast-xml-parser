@@ -302,6 +302,10 @@ const parseXml = function (xmlData) {
   const xmlObj = new xmlNode('!xml');
   let currentNode = xmlObj;
   let textData = "";
+  // Interval-based text collection: instead of concatenating char by char,
+  // remember where the current text run starts and flush the whole
+  // [textStart, i) slice with one substring when markup is encountered.
+  let textStart = 0;
 
   // Reset matcher for new document
   this.matcher.reset();
@@ -316,6 +320,8 @@ const parseXml = function (xmlData) {
   for (let i = 0; i < xmlLen; i++) {//for each char in XML data
     const ch = xmlData[i];
     if (ch === '<') {
+      // Flush the pending text run in one slice (interval collection)
+      if (i > textStart) textData += xmlData.substring(textStart, i);
       // const nextIndex = i+1;
       // const _2ndChar = xmlData[nextIndex];
       const c1 = xmlData.charCodeAt(i + 1);
@@ -585,6 +591,7 @@ const parseXml = function (xmlData) {
             this.matcher.pop(); // Pop unpaired tag
             this.isCurrentNodeStopNode = false; // Reset flag
             i = result.closeIndex;
+            textStart = i + 1; // next text run starts after this tag
             // Continue to next iteration without changing currentNode
             continue;
           }
@@ -606,9 +613,14 @@ const parseXml = function (xmlData) {
           i = closeIndex;
         }
       }
-    } else {
-      textData += xmlData[i];
+      // Every tag-handling path above leaves `i` on the last consumed
+      // character, so the next text run starts right after it.
+      textStart = i + 1;
     }
+    // Non-'<' characters are not copied one by one; they are covered by the
+    // [textStart, i) interval and flushed in a single substring on the next
+    // markup boundary. Trailing text after the last tag is intentionally not
+    // flushed, matching the previous behavior (it was never saved either).
   }
   return xmlObj.child;
 }

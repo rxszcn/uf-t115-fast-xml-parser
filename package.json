@@ -24,6 +24,7 @@
     "test-types": "tsc --noEmit spec/typings/typings-test.ts",
     "unit": "jasmine",
     "perf": "node ./benchmark/perfTest3.js",
+    "perf:text": "node ./benchmark/textCollection.mjs",
     "lint": "eslint src/**/*.js spec/**/*.js benchmark/**/*.js",
     "bundle": "webpack --config webpack.cjs.config.js",
     "prettier": "prettier --write src/**/*.js",
